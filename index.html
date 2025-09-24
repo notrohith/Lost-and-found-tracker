@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost and Found Tracker (Hash Table Version)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .hero-bg { background-image: linear-gradient(to right, rgba(79, 70, 229, 0.9), rgba(165, 55, 253, 0.8)), url(''); background-size: cover; background-position: center; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white shadow-md sticky top-0 z-40">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#" class="nav-link text-2xl font-bold text-indigo-600" data-page="home">
+                <i class="fas fa-search-location mr-2"></i>Lost and Found Tracker
+            </a>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="nav-link text-gray-600 hover:text-indigo-600" data-page="home">Home</a>
+                <a href="#" class="nav-link text-gray-600 hover:text-indigo-600" data-page="report" data-type="Lost">Report Lost</a>
+                <a href="#" class="nav-link text-gray-600 hover:text-indigo-600" data-page="report" data-type="Found">Report Found</a>
+                <a href="#" class="nav-link text-gray-600 hover:text-indigo-600" data-page="search">Search Items</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div id="auth-links-guest">
+                    <a href="#" class="nav-link px-4 py-2 text-sm font-semibold text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-600 hover:text-white" data-page="login">Login / Signup</a>
+                </div>
+                <div id="auth-links-user" class="hidden">
+                    <a href="#" class="nav-link text-gray-600 hover:text-indigo-600" data-page="dashboard">Dashboard</a>
+                    <a href="#" id="logout-btn" class="ml-4 text-gray-600 hover:text-indigo-600">Logout</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="pb-16">
+        <!-- Home Page -->
+        <div id="home-page" class="page active">
+            <section class="hero-bg text-white">
+                <div class="container mx-auto px-6 py-24 text-center">
+                    <h1 class="text-4xl md:text-6xl font-bold mb-4">Centralized Lost and Found System</h1>
+                    <p class="text-lg md:text-xl mb-8">A single platform to track, report, and recover lost items efficiently.</p>
+                    <div class="space-x-4">
+                        <a href="#" class="nav-link inline-block bg-white text-indigo-600 font-semibold px-8 py-3 rounded-md hover:bg-gray-100" data-page="report" data-type="Lost">Report a Lost Item</a>
+                        <a href="#" class="nav-link inline-block bg-green-500 text-white font-semibold px-8 py-3 rounded-md hover:bg-green-600" data-page="report" data-type="Found">Report a Found Item</a>
+                    </div>
+                </div>
+            </section>
+            <section class="py-16">
+                <div class="container mx-auto px-6">
+                    <h2 class="text-3xl font-bold text-center mb-12">Recently Reported Items</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" id="recent-items-container">
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Report Lost/Found Page -->
+        <div id="report-page" class="page container mx-auto p-8">
+            <h2 id="report-page-title" class="text-3xl font-bold mb-8 text-center"></h2>
+            <form id="report-form" class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+                 <input type="hidden" id="report-type" value="">
+                <div class="mb-4">
+                    <label for="item-name" class="block text-gray-700 font-semibold mb-2">Item Name</label>
+                    <input type="text" id="item-name" required class="w-full px-3 py-2 border rounded-md" placeholder="e.g., Earphones">
+                </div>
+                <div class="mb-4">
+                    <label for="item-category" class="block text-gray-700 font-semibold mb-2">Category</label>
+                    <select id="item-category" class="w-full px-3 py-2 border rounded-md">
+                        <option>Electronics</option><option>Wallet/ID</option><option>Keys</option><option>Clothing</option><option>Bags</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="item-desc" class="block text-gray-700 font-semibold mb-2">Description</label>
+                    <textarea id="item-desc" rows="3" required class="w-full px-3 py-2 border rounded-md" placeholder="Description"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="item-location" class="block text-gray-700 font-semibold mb-2">Location</label>
+                    <input type="text" id="item-location" required class="w-full px-3 py-2 border rounded-md" placeholder="e.g. Library">
+                </div>
+                 <div class="mb-4">
+                    <label for="item-date" class="block text-gray-700 font-semibold mb-2">Date</label>
+                    <input type="date" id="item-date" required class="w-full px-3 py-2 border rounded-md">
+                </div>
+                <div class="mb-6">
+                    <label for="item-image" class="block text-gray-700 font-semibold mb-2">Upload Photo</label>
+                    <input type="file" id="item-image" accept="image/*" class="w-full">
+                </div>
+                 <div id="security-question-container" class="p-4 bg-yellow-50 border-l-4 border-yellow-400 mb-6">
+                    <p class="font-bold">Security Question (For Found Items)</p>
+                    <p class="text-sm mb-2">Create a question only the true owner can answer.</p>
+                    <input type="text" id="item-sec-q" class="mt-2 w-full px-3 py-2 border rounded-md" placeholder="e.g., What is the brand name?">
+                    <input type="text" id="item-sec-a" class="mt-2 w-full px-3 py-2 border rounded-md" placeholder="The exact answer (case-sensitive)">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-md hover:bg-indigo-700">Submit Report</button>
+                <div id="report-status" class="mt-4 text-center"></div>
+            </form>
+        </div>
+
+        <!-- Search & Browse Page -->
+        <div id="search-page" class="page container mx-auto p-8">
+            <h2 class="text-3xl font-bold mb-8 text-center">Search for an Item</h2>
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8 max-w-4xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="search-filters">
+                    <input type="text" id="search-keyword" placeholder="Keyword (e.g., iPhone)" class="md:col-span-2 w-full px-3 py-2 border rounded-md">
+                    <select id="search-category" class="w-full px-3 py-2 border rounded-md">
+                        <option value="">All Categories</option><option>Electronics</option><option>Wallet/ID</option><option>Keys</option><option>Clothing</option><option>Bags</option><option>Other</option>
+                    </select>
+                    <select id="search-status" class="w-full px-3 py-2 border rounded-md">
+                        <option value="">All Types</option><option value="Lost">Lost</option><option value="Found">Found</option>
+                    </select>
+                </div>
+            </div>
+            <div id="search-results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            </div>
+        </div>
+        
+        <!-- Item Details Page -->
+        <div id="item-details-page" class="page container mx-auto p-8">
+             <div id="item-details-content" class="bg-white p-8 rounded-lg shadow-lg max-w-4xl mx-auto">
+            </div>
+        </div>
+
+        <!-- User Dashboard -->
+        <div id="dashboard-page" class="page container mx-auto p-8">
+            <h2 class="text-3xl font-bold mb-8">My Dashboard</h2>
+            <div id="dashboard-user-info" class="bg-white p-6 rounded-lg shadow-md mb-8"></div>
+            <div>
+                <h3 class="text-2xl font-semibold mb-4">My Lost Reports</h3>
+                <div id="dashboard-lost-items" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+            <div class="mt-12">
+                <h3 class="text-2xl font-semibold mb-4">My Found Reports</h3>
+                <div id="dashboard-found-items" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+        </div>
+
+        <!-- Login/Signup Page -->
+        <div id="login-page" class="page container mx-auto p-8">
+            <div class="flex items-center justify-center">
+                <div class="max-w-md w-full">
+                     <!-- Login View -->
+                    <div id="login-view">
+                         <div class="bg-white p-10 rounded-xl shadow-lg">
+                            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Sign in</h2>
+                            <form id="login-form" class="mt-8 space-y-6">
+                                <input id="login-email" type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Your Email">
+                                <input id="login-password" type="password" required class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Password">
+                                <p id="login-error" class="text-red-500 text-sm text-center"></p>
+                                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Sign in</button>
+                            </form>
+                            <p class="text-center text-sm mt-6">Don't have an account? <a href="#" id="show-register" class="font-medium text-indigo-600 hover:text-indigo-500">Register here</a></p>
+                        </div>
+                    </div>
+                    <!-- Register View -->
+                    <div id="register-view" class="hidden">
+                        <div class="bg-white p-10 rounded-xl shadow-lg">
+                            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Create an account</h2>
+                            <form id="register-form" class="mt-8 space-y-6">
+                                <input id="register-name" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Your Name">
+                                <input id="register-email" type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Your Email">
+                                <input id="register-phone" type="tel" required class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Your Phone Number">
+                                <input id="register-password" type="password" required class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Password">
+                                <p id="register-error" class="text-red-500 text-sm text-center"></p>
+                                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Register</button>
+                            </form>
+                            <p class="text-center text-sm mt-6">Already have an account? <a href="#" id="show-login" class="font-medium text-indigo-600 hover:text-indigo-500">Sign in here</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Claim Modal and other hidden elements -->
+    <div id="claim-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-4">Claim Item</h2>
+            <p id="claim-item-name" class="mb-2"></p>
+            <p id="claim-question" class="font-semibold mb-4"></p>
+            <form id="claim-form">
+                <input type="hidden" id="claim-item-id">
+                <input type="hidden" id="claim-answer-hash">
+                <input type="text" id="claim-answer" required class="w-full px-3 py-2 border rounded-md" placeholder="Your Answer">
+                <p id="claim-error" class="text-red-500 text-sm mt-2"></p>
+                <div class="mt-6 flex justify-end space-x-4">
+                    <button type="button" id="cancel-claim" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md">Cancel</button>
+                    <button type="submit" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-md">Submit Claim</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- CORE HASH TABLE IMPLEMENTATION ---
+        class HashTable {
+            constructor(size = 50) {
+                this.table = new Array(size);
+                this.size = size;
+            }
+
+            _hash(key) {
+                let total = 0;
+                // Use a simple string key for hashing regardless of type
+                const stringKey = String(key);
+                for (let i = 0; i < stringKey.length; i++) {
+                    total = (total * 37 + stringKey.charCodeAt(i)) % this.size;
+                }
+                return total;
+            }
+
+            add(key, value) {
+                const index = this._hash(key);
+                if (!this.table[index]) {
+                    this.table[index] = [];
+                }
+                const existingPairIndex = this.table[index].findIndex(pair => pair[0] === key);
+                if (existingPairIndex > -1) {
+                    this.table[index][existingPairIndex][1] = value;
+                } else {
+                    this.table[index].push([key, value]);
+                }
+            }
+
+            get(key) {
+                const index = this._hash(key);
+                if (this.table[index]) {
+                    const foundPair = this.table[index].find(pair => pair[0] === key);
+                    if (foundPair) {
+                        return foundPair[1];
+                    }
+                }
+                return null;
+            }
+
+            getAllItemsAsArray() {
+                const allItems = [];
+                for (let i = 0; i < this.table.length; i++) {
+                    if (this.table[i]) {
+                        for (let j = 0; j < this.table[i].length; j++) {
+                            allItems.push(this.table[i][j][1]);
+                        }
+                    }
+                }
+                return allItems;
+            }
+        }
+
+        // --- STATE MANAGEMENT ---
+        let currentUser = null;
+        let itemHashTable;
+        let users = [];
+
+        // --- LOCAL STORAGE & DATA HANDLING ---
+        const saveData = () => {
+            const hashTableData = {
+                table: itemHashTable.table,
+                size: itemHashTable.size
+            };
+            localStorage.setItem('reunite_items_hashtable', JSON.stringify(hashTableData));
+            localStorage.setItem('reunite_users', JSON.stringify(users));
+        };
+
+        const loadData = () => {
+            const savedTableData = JSON.parse(localStorage.getItem('reunite_items_hashtable') || 'null');
+            if (savedTableData && savedTableData.table) {
+                itemHashTable = new HashTable(savedTableData.size);
+                itemHashTable.table = savedTableData.table;
+            } else {
+                itemHashTable = new HashTable();
+            }
+            users = JSON.parse(localStorage.getItem('reunite_users') || '[]');
+            currentUser = JSON.parse(sessionStorage.getItem('reunite_currentUser') || 'null');
+        };
+        
+        const setCurrentUser = (user) => {
+            currentUser = user;
+            sessionStorage.setItem('reunite_currentUser', JSON.stringify(user));
+        };
+        
+        const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        // --- HASHING UTILITY for Security Questions ---
+        const simpleHash = async(str) => {
+            const buffer = new TextEncoder().encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        };
+        
+        // --- PAGE NAVIGATION ---
+        const pages = document.querySelectorAll('.page');
+        const showPage = (pageId, context = {}) => {
+            const protectedPages = ['dashboard', 'report'];
+            if (protectedPages.includes(pageId) && !currentUser) {
+                showPage('login');
+                return;
+            }
+
+            pages.forEach(page => {
+                page.classList.toggle('active', page.id === `${pageId}-page`);
+            });
+            window.scrollTo(0, 0);
+
+            if (pageId === 'home') renderHomePage();
+            if (pageId === 'report') setupReportPage(context.type);
+            if (pageId === 'search') renderSearchPage();
+            if (pageId === 'dashboard') renderDashboardPage();
+            if (pageId === 'item-details') renderItemDetailsPage(context.itemId);
+        };
+
+        // --- AUTHENTICATION ---
+        const guestLinks = document.getElementById('auth-links-guest');
+        const userLinks = document.getElementById('auth-links-user');
+
+        const updateAuthState = () => {
+            if (currentUser) {
+                guestLinks.classList.add('hidden');
+                userLinks.classList.remove('hidden');
+            } else {
+                guestLinks.classList.remove('hidden');
+                userLinks.classList.add('hidden');
+            }
+        };
+
+        // --- MODIFIED RENDERING LOGIC ---
+        const createItemCard = (item) => {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col';
+            const statusColor = item.type === 'Lost' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800';
+            const statusText = item.claimedBy ? 'Claimed' : item.type;
+            
+            card.innerHTML = `
+                <img src="${item.imageUrl || 'https://placehold.co/600x400/e2e8f0/cbd5e0?text=No+Image'}" alt="${item.name}" class="w-full h-48 object-cover">
+                <div class="p-4 flex-grow">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-bold text-lg mb-2">${item.name}</h3>
+                        <span class="text-xs font-semibold px-2 py-1 ${statusColor} rounded-full">${statusText}</span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-2">${item.category}</p>
+                    <p class="text-xs text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i> ${item.location}</p>
+                </div>
+                <button class="view-details-btn w-full text-center bg-indigo-500 text-white font-bold py-2 px-4 hover:bg-indigo-600 transition" data-id="${item.id}">View Details</button>
+            `;
+            return card;
+        };
+
+        const renderHomePage = () => {
+            const container = document.getElementById('recent-items-container');
+            container.innerHTML = '';
+            const allItemsArray = itemHashTable.getAllItemsAsArray();
+            const recentItems = allItemsArray.sort((a, b) => b.id - a.id).slice(0, 4);
+            if (recentItems.length === 0) {
+                 container.innerHTML = `<p class="col-span-full text-center text-gray-500">No items reported yet.</p>`;
+            } else {
+                recentItems.forEach(item => container.appendChild(createItemCard(item)));
+            }
+        };
+        
+        const renderSearchPage = () => {
+            const allItemsArray = itemHashTable.getAllItemsAsArray();
+            const keyword = document.getElementById('search-keyword').value.toLowerCase();
+            const category = document.getElementById('search-category').value;
+            const status = document.getElementById('search-status').value;
+            
+            const filtered = allItemsArray.filter(item => {
+                const matchesKeyword = item.name.toLowerCase().includes(keyword) || item.description.toLowerCase().includes(keyword);
+                const matchesCategory = !category || item.category === category;
+                const matchesStatus = !status || item.type === status;
+                return matchesKeyword && matchesCategory && matchesStatus;
+            });
+            
+            const container = document.getElementById('search-results-container');
+            container.innerHTML = '';
+            if (filtered.length === 0) {
+                container.innerHTML = `<p class="col-span-full text-center text-gray-500">No items match your search.</p>`;
+            } else {
+                filtered.forEach(item => container.appendChild(createItemCard(item)));
+            }
+        };
+
+        const renderItemDetailsPage = (itemId) => {
+            const item = itemHashTable.get(itemId);
+            const container = document.getElementById('item-details-content');
+            if (!item) {
+                container.innerHTML = `<p class="text-center text-red-500">Item not found.</p>`;
+                return;
+            }
+
+            let footerHtml = '';
+            if (item.claimedBy) {
+                footerHtml = `<div class="mt-6 p-4 bg-gray-100 rounded-md text-center font-semibold text-gray-700">This item has been claimed.</div>`;
+                 if (currentUser && (currentUser.uid === item.reporter.uid || currentUser.uid === item.claimedBy.uid)) {
+                     const contact = currentUser.uid === item.reporter.uid ? item.claimedBy : item.reporter;
+                     footerHtml += `<div class="mt-4 p-4 bg-blue-100 text-blue-800 rounded-md">
+                        <h4 class="font-bold">Contact Information:</h4>
+                        <p>Name: ${contact.name}</p>
+                        <p>Email: ${contact.email}</p>
+                        <p>Phone: ${contact.phone}</p>
+                    </div>`;
+                 }
+            } else if (item.type === 'Found' && currentUser && currentUser.uid !== item.reporter.uid) {
+                footerHtml = `<button id="claim-item-btn" data-id="${item.id}" class="mt-6 w-full bg-green-500 text-white font-bold py-3 rounded-md hover:bg-green-600">Claim This Item</button>`;
+            } else if (item.type === 'Lost') {
+                footerHtml = `<div class="mt-6 p-4 bg-blue-100 rounded-md text-center text-blue-800">If you have found this item, please contact the owner: <br><strong>${item.reporter.email}</strong></div>`;
+            }
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div><img src="${item.imageUrl}" alt="${item.name}" class="w-full rounded-lg shadow-lg"></div>
+                    <div>
+                        <span class="text-sm font-semibold px-2 py-1 ${item.type === 'Lost' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} rounded-full">${item.type} Item</span>
+                        <h2 class="text-4xl font-bold mt-2 mb-4">${item.name}</h2>
+                        <div class="space-y-3 text-gray-700 border-t pt-4">
+                            <p><strong>Category:</strong> ${item.category}</p>
+                            <p><strong>Description:</strong> ${item.description}</p>
+                            <p><strong>Location:</strong> ${item.location}</p>
+                            <p><strong>Date:</strong> ${item.date}</p>
+                            <p><strong>Reported by:</strong> ${item.reporter.name}</p>
+                        </div>
+                        ${footerHtml}
+                    </div>
+                </div>
+            `;
+        };
+
+        const renderDashboardPage = () => {
+            if (!currentUser) return;
+            document.getElementById('dashboard-user-info').innerHTML = `
+                <h3 class="text-xl font-bold">${currentUser.name}</h3>
+                <p class="text-gray-600">${currentUser.email} | ${currentUser.phone}</p>
+            `;
+            const allItemsArray = itemHashTable.getAllItemsAsArray();
+            const myLostItems = allItemsArray.filter(item => item.reporter.uid === currentUser.uid && item.type === 'Lost');
+            const myFoundItems = allItemsArray.filter(item => item.reporter.uid === currentUser.uid && item.type === 'Found');
+
+            const lostContainer = document.getElementById('dashboard-lost-items');
+            lostContainer.innerHTML = '';
+            if (myLostItems.length > 0) myLostItems.forEach(item => lostContainer.appendChild(createItemCard(item)));
+            else lostContainer.innerHTML = `<p class="text-gray-500">You haven't reported any lost items.</p>`;
+
+            const foundContainer = document.getElementById('dashboard-found-items');
+            foundContainer.innerHTML = '';
+            if (myFoundItems.length > 0) myFoundItems.forEach(item => foundContainer.appendChild(createItemCard(item)));
+            else foundContainer.innerHTML = `<p class="text-gray-500">You haven't reported any found items.</p>`;
+        };
+        
+        const setupReportPage = (type) => {
+            document.getElementById('report-form').reset();
+            document.getElementById('report-page-title').textContent = `Report a ${type} Item`;
+            document.getElementById('report-type').value = type;
+            const secQuestionContainer = document.getElementById('security-question-container');
+            secQuestionContainer.style.display = type === 'Found' ? 'block' : 'none';
+        };
+        
+        // --- EVENT LISTENERS & FORM HANDLERS ---
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const user = users.find(u => u.email === email && u.password === password);
+            if (user) {
+                setCurrentUser(user);
+                updateAuthState();
+                showPage('dashboard');
+            } else {
+                document.getElementById('login-error').textContent = 'Invalid credentials.';
+            }
+        });
+
+        document.getElementById('register-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const phone = document.getElementById('register-phone').value;
+            const password = document.getElementById('register-password').value;
+            if (users.some(u => u.email === email)) {
+                document.getElementById('register-error').textContent = 'Email already exists.';
+                return;
+            }
+            const newUser = { name, email, phone, password, uid: email };
+            users.push(newUser);
+            saveData();
+            setCurrentUser(newUser);
+            updateAuthState();
+            showPage('dashboard');
+        });
+
+        document.getElementById('report-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const type = document.getElementById('report-type').value;
+            const imageFile = document.getElementById('item-image').files[0];
+            let imageUrl = 'https://placehold.co/600x400/e2e8f0/cbd5e0?text=No+Image';
+            if (imageFile) imageUrl = await fileToDataUrl(imageFile);
+            
+            const newItem = {
+                id: Date.now().toString(),
+                name: document.getElementById('item-name').value,
+                category: document.getElementById('item-category').value,
+                description: document.getElementById('item-desc').value,
+                location: document.getElementById('item-location').value,
+                date: document.getElementById('item-date').value,
+                imageUrl,
+                type,
+                reporter: { uid: currentUser.uid, name: currentUser.name, email: currentUser.email, phone: currentUser.phone },
+                claimedBy: null,
+            };
+
+            if (type === 'Found') {
+                newItem.securityQuestion = document.getElementById('item-sec-q').value;
+                newItem.answerHash = await simpleHash(document.getElementById('item-sec-a').value);
+                if(!newItem.securityQuestion || !document.getElementById('item-sec-a').value) {
+                    alert('Security question and answer are required for found items.');
+                    return;
+                }
+            }
+
+            itemHashTable.add(newItem.id, newItem);
+            saveData();
+            
+            const statusDiv = document.getElementById('report-status');
+            statusDiv.textContent = 'Report submitted successfully!';
+            statusDiv.classList.add('text-green-600');
+            setTimeout(() => {
+                statusDiv.textContent = '';
+                statusDiv.classList.remove('text-green-600');
+                showPage('item-details', { itemId: newItem.id });
+            }, 1500);
+        });
+
+        document.getElementById('claim-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const itemId = document.getElementById('claim-item-id').value;
+            const storedHash = document.getElementById('claim-answer-hash').value;
+            const userAnswer = document.getElementById('claim-answer').value;
+
+            if (await simpleHash(userAnswer) === storedHash) {
+                const item = itemHashTable.get(itemId);
+                if (item) {
+                    item.claimedBy = { uid: currentUser.uid, name: currentUser.name, email: currentUser.email, phone: currentUser.phone };
+                    saveData();
+                    document.getElementById('cancel-claim').click();
+                    renderItemDetailsPage(itemId);
+                }
+            } else {
+                document.getElementById('claim-error').textContent = "Incorrect answer. Please try again.";
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            currentUser = null;
+            sessionStorage.removeItem('reunite_currentUser');
+            updateAuthState();
+            showPage('home');
+        });
+
+        document.getElementById('show-register').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('register-view').classList.remove('hidden');
+        });
+        document.getElementById('show-login').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('register-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+        });
+        
+        document.getElementById('search-filters').addEventListener('input', renderSearchPage);
+        
+        const claimModal = document.getElementById('claim-modal');
+        document.body.addEventListener('click', (e) => {
+             const navLink = e.target.closest('.nav-link');
+             if (navLink) {
+                e.preventDefault();
+                const page = navLink.dataset.page;
+                const type = navLink.dataset.type;
+                showPage(page, { type });
+            }
+            const detailsBtn = e.target.closest('.view-details-btn');
+            if (detailsBtn) {
+                showPage('item-details', { itemId: detailsBtn.dataset.id });
+            }
+            if(e.target.id === 'claim-item-btn') {
+                 const item = itemHashTable.get(e.target.dataset.id);
+                 if(item) {
+                     document.getElementById('claim-item-name').textContent = `Item: ${item.name}`;
+                     document.getElementById('claim-question').textContent = `Question: ${item.securityQuestion}`;
+                     document.getElementById('claim-item-id').value = item.id;
+                     document.getElementById('claim-answer-hash').value = item.answerHash;
+                     claimModal.classList.remove('hidden');
+                 }
+            }
+        });
+        
+        document.getElementById('cancel-claim').addEventListener('click', () => {
+             claimModal.classList.add('hidden');
+             document.getElementById('claim-form').reset();
+             document.getElementById('claim-error').textContent = '';
+        });
+
+        // --- INITIALIZATION ---
+        const initialize = () => {
+            loadData(); 
+            updateAuthState();
+            showPage('home');
+        };
+
+        initialize();
+    });
+    </script>
+</body>
+</html>
+
